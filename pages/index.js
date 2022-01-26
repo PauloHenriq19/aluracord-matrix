@@ -1,36 +1,7 @@
 import { Box, Button, Text, TextField, Image } from "@skynexui/components";
+import React from "react";
+import {useRouter} from 'next/router';
 import appConfig from "../config.json";
-
-function GlobalStyle() {
-  return (
-    <style global jsx>{`
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-        list-style: none;
-      }
-      body {
-        font-family: "Open Sans", sans-serif;
-      }
-      /* App fit Height */
-      html,
-      body,
-      #__next {
-        min-height: 100vh;
-        display: flex;
-        flex: 1;
-      }
-      #__next {
-        flex: 1;
-      }
-      #__next > * {
-        flex: 1;
-      }
-      /* ./App fit Height */
-    `}</style>
-  );
-}
 
 function Titulo(props) {
   const Tag = props.tag || 'h1';
@@ -64,19 +35,33 @@ function Titulo(props) {
 // export default HomePage
 
 export default function PaginaInicial() {
-  const username = "PauloHenriq19";
+  //const username = "PauloHenriq19";
+
+  //usuário
+  const [username, setUsername] = React.useState('PauloHenriq19')
+  const roteamento = useRouter();
+  const userImage = 'https://media.istockphoto.com/vectors/funny-cartoon-brain-character-with-facepalm-gesture-vector-id1261650074?s=612x612';
+  const [githubData, setGithubData] = React.useState('');
+
+  // trazer dados da api do github 
+  fetch(`https://api.github.com/users/${username}`)
+            .then((res) => {
+                return res.json()
+            })
+            .then((data) => {
+                setGithubData(data)
+            })
 
   return (
     <>
-      <GlobalStyle />
       <Box
         styleSheet={{
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          backgroundColor: appConfig.theme.colors.primary[500],
+          backgroundColor: appConfig.theme.colors.primary[100],
           backgroundImage:
-            "url(https://virtualbackgrounds.site/wp-content/uploads/2020/08/the-matrix-digital-rain.jpg)",
+            "url(https://virtualbackgrounds.site/wp-content/uploads/2020/12/bright-gaming-room-setup.jpg)",
           backgroundRepeat: "no-repeat",
           backgroundSize: "cover",
           backgroundBlendMode: "multiply",
@@ -103,6 +88,12 @@ export default function PaginaInicial() {
           {/* Formulário */}
           <Box
             as="form"
+            onSubmit={function (infosDoEvento){
+              infosDoEvento.preventDefault();
+              console.log('Alguém submeteu o form');
+              roteamento.push('/chat');
+
+            }}
             styleSheet={{
               display: "flex",
               flexDirection: "column",
@@ -113,7 +104,7 @@ export default function PaginaInicial() {
               marginBottom: "32px",
             }}
           >
-            <Titulo tag="h2">Boas vindas de volta!</Titulo>
+            <Titulo tag="h2">Welcome!</Titulo>
             <Text
               variant="body3"
               styleSheet={{
@@ -124,7 +115,34 @@ export default function PaginaInicial() {
               {appConfig.name}
             </Text>
 
-            <TextField
+          {/* <input
+          type="text"
+          value={username}
+          onChange={function (event){
+            //onde está o valor?
+            const valor = event.target.value;
+            // trocar o valor da variavel
+            //através do React e avise quem precisa
+            setUsername(valor);
+          }}
+          /> */} 
+
+          <TextField
+              value={username}
+              name='nomeUsuario'
+              placeholder='Digite o nome do usuário'
+              onChange={function (event){
+              //onde está o valor?
+              const valor = event.target.value;
+              // trocar o valor da variavel
+              //através do React e avise quem precisa
+              setUsername(valor);
+              /* if(valor.length > 2) {
+                setUserImage(`https://github.com/${valor}.png`)
+              } else {
+                setUserImage('https://www.istockphoto.com/br/vetor/erro-404-como-laptop-com-emoji-morto-desenhos-animados-plana-m%C3%ADnima-tend%C3%AAncia-gm1011988208-272646277')
+              } */
+              }}
               fullWidth
               textFieldColors={{
                 neutral: {
@@ -165,13 +183,27 @@ export default function PaginaInicial() {
               minHeight: "240px",
             }}
           >
+            <Text
+              variant="body4"
+              styleSheet={{
+                color: appConfig.theme.colors.neutrals[200],
+                backgroundColor: appConfig.theme.colors.neutrals[900],
+                padding: '3px 10px',
+                borderRadius: '1000px'
+              }}
+            >
+              {githubData.name}
+            </Text>
+            <br />
             <Image
               styleSheet={{
-                borderRadius: "50%",
-                marginBottom: "16px",
+                borderRadius: '50%',
+                marginBottom: '16px',
               }}
-              src={`https://github.com/${username}.png`}
+              //src={userImage}
+              src={username.length > 2 ? `https://github.com/${username}.png` : userImage}
             />
+           
             <Text
               variant="body4"
               styleSheet={{
@@ -182,6 +214,18 @@ export default function PaginaInicial() {
               }}
             >
               {username}
+            </Text>
+            <br />
+            <Text
+              variant="body4"
+              styleSheet={{
+                color: appConfig.theme.colors.neutrals[200],
+                backgroundColor: appConfig.theme.colors.neutrals[900],
+                padding: '3px 10px',
+                borderRadius: '1000px'
+              }}
+            >
+              {githubData.followers} followers
             </Text>
           </Box>
           {/* Photo Area */}
