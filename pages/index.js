@@ -38,7 +38,7 @@ export default function PaginaInicial() {
   //const username = "PauloHenriq19";
 
   //usuário
-  const [username, setUsername] = React.useState('PauloHenriq19')
+  const [username, setUsername] = React.useState('')
   const roteamento = useRouter();
   const userImage = 'https://media.istockphoto.com/vectors/funny-cartoon-brain-character-with-facepalm-gesture-vector-id1261650074?s=612x612';
   const [githubData, setGithubData] = React.useState('');
@@ -61,7 +61,7 @@ export default function PaginaInicial() {
           justifyContent: "center",
           backgroundColor: appConfig.theme.colors.primary[100],
           backgroundImage:
-            "url(https://virtualbackgrounds.site/wp-content/uploads/2020/12/bright-gaming-room-setup.jpg)",
+            "url(https://images.pexels.com/photos/956999/milky-way-starry-sky-night-sky-star-956999.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1)",
           backgroundRepeat: "no-repeat",
           backgroundSize: "cover",
           backgroundBlendMode: "multiply",
@@ -154,6 +154,7 @@ export default function PaginaInicial() {
               }}
             />
             <Button
+              disabled={username?.length <=2}
               type="submit"
               label="Entrar"
               fullWidth
