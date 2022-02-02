@@ -3,6 +3,8 @@ import React from "react";
 import {useRouter} from 'next/router';
 import appConfig from "../config.json";
 
+
+
 function Titulo(props) {
   const Tag = props.tag || 'h1';
   return (
@@ -42,6 +44,7 @@ export default function PaginaInicial() {
   const roteamento = useRouter();
   const userImage = 'https://media.istockphoto.com/vectors/funny-cartoon-brain-character-with-facepalm-gesture-vector-id1261650074?s=612x612';
   const [githubData, setGithubData] = React.useState('');
+  
 
   // trazer dados da api do github 
   fetch(`https://api.github.com/users/${username}`)
@@ -91,7 +94,7 @@ export default function PaginaInicial() {
             onSubmit={function (infosDoEvento){
               infosDoEvento.preventDefault();
               console.log('Alguém submeteu o form');
-              roteamento.push('/chat');
+              roteamento.push(`/chat?username=${username}`);
 
             }}
             styleSheet={{
@@ -132,6 +135,9 @@ export default function PaginaInicial() {
               name='nomeUsuario'
               placeholder='Digite o nome do usuário'
               onChange={function (event){
+              /* sinal para React não anular o objeto de evento */ 
+              event.persist(); 
+
               //onde está o valor?
               const valor = event.target.value;
               // trocar o valor da variavel

@@ -1,11 +1,59 @@
 import { Box, Text, TextField, Image, Button, Icon } from "@skynexui/components";
 import React from "react";
 import appConfig from "../config.json";
+import { useRouter } from 'next/router';
+import { createClient } from "@supabase/supabase-js";
+import { ButtonSendSticker } from '../src/componentes/ButtonSendSticker';
+
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+function mensagemTempoReal(adicionaMensagem) {
+  return supabaseClient
+      .from('mensagens')
+      .on('INSERT', (respostaLive) => {
+          adicionaMensagem(respostaLive.new);
+
+      })
+      .subscribe();
+}
 
 export default function ChatPage() {
   // Sua lógica vai aqui
-  const [mensagem, setMensagem] = React.useState("");
+  const roteamento = useRouter();
+  const usuarioLogado = roteamento.query.username;
+  /* console.log('usurarioLogado', usuarioLogado);
+  console.log('roteamento.query', roteamento.query.username); */
+  const [mensagem, setMensagem] = React.useState('');
   const [listaDeMensagens, setListaDeMensagens] = React.useState([]);
+  //const [loading, setLoading] = useState(true);
+
+  React.useEffect(()=>{
+    supabaseClient
+    .from('mensagens')
+    .select('*')
+    .order('id', {ascending: false})
+    .then(({data }) => {
+        console.log('Dados da consulta:', data);
+        setListaDeMensagens(data);
+        //setLoading(false);
+
+    });
+
+    mensagemTempoReal((novaMensagem) => {
+        //handleNovaMensagem(novaMensagem)
+        setListaDeMensagens((valorAtualdaLista) => {
+          return [
+            novaMensagem, 
+            ...valorAtualdaLista,
+          ]          
+        });
+    });
+    return () => {
+      subscription.unsubscribe();
+    }
+  }, []);
 
   /*
     // Usuário
@@ -21,14 +69,40 @@ export default function ChatPage() {
 
   function handleNovaMensagem(novaMensagem) {
     const mensagem = {
-      id: listaDeMensagens.length + 1,
-      de: "PauloHenriq19",
+      //id: listaDeMensagens.length + 1,
+      de: usuarioLogado,
       texto: novaMensagem,
     };
-    setListaDeMensagens([mensagem, ...listaDeMensagens]);
+
+    supabaseClient
+    .from('mensagens')
+    .insert([
+        mensagem
+    ])
+     .then(({ data })=>{
+        //console.log()
+        /*setListaDeMensagens([
+            data[0], 
+            ...listaDeMensagens
+        ]);*/
+
+    }); 
+    
     setMensagem('');
   }
 
+  function handleDeletaMensagem(mensagemAtual) {
+    supabaseClient
+      .from("mensagens")
+      .delete()
+      .match({ id: mensagemAtual.id })
+      .then(({ data }) => {
+        const listaDeMensagensFiltrada = listaDeMensagens.filter((mensagem) => {
+          return mensagem.id != data[0].id;
+        });
+        setListaDeMensagens(listaDeMensagensFiltrada);
+      });
+  }
   // ./Sua lógica vai aqui
   return (
     <Box
@@ -71,7 +145,10 @@ export default function ChatPage() {
             padding: "16px",
           }}
         >
-          <MessageList mensagens={listaDeMensagens} atualizaListaMsgs={setListaDeMensagens} />
+          <MessageList mensagens={listaDeMensagens} 
+          //atualizaListaMsgs={setListaDeMensagens} 
+          handleDeletaMensagem={handleDeletaMensagem}
+          />
           {/* {listaDeMensagens.map((mensagemAtual) => {
                         return (
                             <li key={mensagemAtual.id}>
@@ -112,13 +189,19 @@ export default function ChatPage() {
                 color: appConfig.theme.colors.neutrals[200],
               }}
             />
+            <ButtonSendSticker
+                onStickerClick={(sticker)=> {
+                  handleNovaMensagem(':sticker:' + sticker);
+
+                }}
+            />
             <Button
               disabled={!mensagem?.length} // botão desativado se não houver mensagempara envio
               onClick={(event) => {
                 handleNovaMensagem(mensagem);
               }}
               type="submit"
-              label="Enviar"              
+              label="Send"              
               buttonColors={{
                 contrastColor: appConfig.theme.colors.neutrals["000"],
                 mainColor: appConfig.theme.colors.primary[500],
@@ -173,16 +256,20 @@ function Header() {
 function MessageList(props) {
   console.log(props);
 
-  function deleteMensagemComId(idMensagem){
+  const handleDeletaMensagem = props.handleDeletaMensagem;
+
+  /* function deleteMensagemComId(idMensagem){
     const novaListaMsg = props.mensagens.filter((mensagem)=> mensagem.id != idMensagem);
     props.atualizaListaMsgs(novaListaMsg);
     
-  }
+  } */
   return (
     <Box
       tag="ul"
       styleSheet={{
-        hidden: "scroll",
+        //hidden: "scroll",
+        overflow: "auto",
+        overflowX: "hidden",
         display: "flex",
         flexDirection: "column-reverse",
         flex: 1,
@@ -217,13 +304,14 @@ function MessageList(props) {
                   display: "inline-block",
                   marginRight: "8px",
                 }}
-                src={`https://github.com/PauloHenriq19.png`}
+                src={`https://github.com/${mensagem.de}.png`}
               />
 
               <Icon
-                onClick={() => {
-                  console.log("clicou: ", mensagem);
-                  deleteMensagemComId(mensagem.id);
+                onClick={(event) => {
+                  //console.log("clicou: ", mensagem);
+                  event.preventDefault();
+                  handleDeletaMensagem(mensagem);
                 }}
                 label="Icon Component"
                 name="FaTrash"
@@ -241,10 +329,19 @@ function MessageList(props) {
                 }}
                 tag="span"
               >
-                {new Date().toLocaleDateString()}
+                {(new Date().toLocaleDateString())}
               </Text>
             </Box>
-            {mensagem.texto}
+            {/* [ Declarativo] */}
+            {/*mensagem.texto.startsWith(':sticker:').toString()*/}
+            {mensagem.texto.startsWith(':sticker:')
+              ? (
+                  <Image src={mensagem.texto.replace(':sticker:', '')}/>
+              )
+              : (
+                  mensagem.texto
+              )
+            }
           </Text>
         );
       })}
